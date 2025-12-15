@@ -3,11 +3,10 @@ import requests
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-# Import from the new structure
 from app.datamodel import Base, WeatherRecord 
 from app.config import settings # Use the new config
 
-# Setup logging
+# Setup logging config
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,14 @@ def parse_and_clean(value):
         return val if val != -9999 else None
     except ValueError:
         return None
-
+"""
+    Main ETL (Extract, Transform, Load) function.
+    
+    >Fetches the list of weather data files from the GitHub API.
+    >Downloads each file individually.
+    >Checks for existing records to avoid duplicates.
+    >Parses the raw text and bulk inserts new records into the database.
+    """
 def ingest_data():
     start_time = datetime.now()
     logger.info(f"--- Ingestion Started at {start_time} ---")
@@ -32,7 +38,7 @@ def ingest_data():
     total_inserted = 0
 
     try:
-        # 1. Get list of files from GitHub API
+        # Get list of files from GitHub API
         resp = http.get(settings.GITHUB_API_URL)
         resp.raise_for_status()
         files = resp.json()
@@ -46,7 +52,7 @@ def ingest_data():
             download_url = file_info['download_url']
             logger.info(f"Processing station: {station_id}...")
             
-            # Optimization: Get existing dates to avoid hitting UNIQUE constraint error
+            # Get existing dates to avoid hitting UNIQUE constraint error
             existing_dates = {
                 r[0] for r in session.query(WeatherRecord.date)
                 .filter(WeatherRecord.file_station_id == station_id)
@@ -60,13 +66,13 @@ def ingest_data():
             for line in file_response.text.splitlines():
                 parts = line.strip().split()
                 if len(parts) != 4: continue
-
+                
                 date_str, tmax, tmin, precip = parts
                 current_date = datetime.strptime(date_str, "%Y%m%d").date()
-
+                # Skips if we already have data record for station on the date
                 if current_date in existing_dates:
                     continue
-
+                # create ORM object with cleaned data
                 record = WeatherRecord(
                     file_station_id=station_id,
                     date=current_date,
@@ -75,7 +81,7 @@ def ingest_data():
                     precipitation_tenths_mm=parse_and_clean(precip)
                 )
                 new_records.append(record)
-
+# load bulk records 
             if new_records:
                 session.bulk_save_objects(new_records)
                 session.commit()
