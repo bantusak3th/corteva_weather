@@ -78,3 +78,7 @@ Filters: station_id, date
 GET /api/weather/stats: Retrieve calculated yearly summaries.
 
 Filters: station_id, year
+
+**
+![Alt text](weather_stats.png)
+**
