@@ -1,6 +1,6 @@
 # Weather Data Pipeline & API
 
-This project is a robust data engineering pipeline designed to ingest historical weather data, store it in a relational database, perform analytical aggregations, and expose the results via a REST API.
+This project is a data engineering pipeline designed to ingest weather data, store it in a relational database, perform analytical aggregations, and expose the results via a REST API.
 
 It has been structured as a Python package to ensure modularity, scalability, and ease of maintenance.
 
@@ -9,7 +9,7 @@ It has been structured as a Python package to ensure modularity, scalability, an
 * **Automated Ingestion:** A production-ready script (`scripts/ingest.py`) streams data directly from the source (GitHub API) into the database without needing local file storage.
 * **Data Analysis:** An optimized analysis script (`scripts/analysis.py`) performs yearly aggregations (Average Temp, Total Precipitation) using SQL for efficiency.
 * **REST API:** A FastAPI application provides access to both raw records and calculated statistics, featuring pagination, filtering, and automatic documentation.
-* **Configuration Management:** All settings (Database URLs, API endpoints) are managed via environment variables in `app/config.py`, following 12-Factor App methodology.
+* **Configuration Management:** All settings (Database URLs, API endpoints) are managed via environment variables in `app/config.py`.
 
 ## Project Structure
 
