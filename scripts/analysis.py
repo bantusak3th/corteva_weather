@@ -25,7 +25,7 @@ def run_analysis():
     session.query(WeatherStats).delete()
     session.commit()
     logging.info("Cleared existing analysis data.")
-
+#  EXTRACT & AGGREGATE (SQL Side)
     year_field = extract('year', WeatherRecord.date).label('year')
 
     results = session.query(
@@ -46,12 +46,15 @@ def run_analysis():
     for row in results:
         file_station_id, year, avg_max, avg_min, total_precip = row
 
-
+        # Unit Conversion Logic:
+        # - Raw Temp is in tenths of degrees C -> Divide by 10 to get °C
+        # - Raw Precip is in tenths of mm -> Divide by 100 to get cm (10mm = 1cm)
+        # We also handle None values to prevent errors if data is missing.
 
         final_max = round(avg_max / 10.0, 2) if avg_max is not None else None
         final_min = round(avg_min / 10.0, 2) if avg_min is not None else None
         final_precip = round(total_precip / 100.0, 2) if total_precip is not None else 0.0
-
+        # Create the ORM object
         stat_record = WeatherStats(
             file_station_id=file_station_id,
             year=int(year),
@@ -62,6 +65,7 @@ def run_analysis():
         stats_batch.append(stat_record)
 
     # Bulk insert
+    # bulk_save_objects is much faster than adding objects one by one for large datasets.
     session.bulk_save_objects(stats_batch)
     session.commit()
 
